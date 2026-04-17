@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package rdma.scheduler.v1;
+
+option cc_enable_arenas = true;
+option go_package = "rdma-ai-platform/scheduler/proto/gen/schedulerv1;schedulerv1";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+service SchedulerService {
+  // RegisterWorker is called when a worker node first joins the cluster.
+  rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse);
+
+  // Heartbeat refreshes the runtime state of a connected worker.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // WatchAssignments streams scheduled tasks to a specific worker.
+  rpc WatchAssignments(WatchAssignmentsRequest) returns (stream TaskAssignment);
+
+  // ReportTaskResult is called by a worker after task execution finishes.
+  rpc ReportTaskResult(ReportTaskResultRequest) returns (ReportTaskResultResponse);
+
+  // SubmitTask creates a new task for the scheduler to place onto a worker.
+  rpc SubmitTask(SubmitTaskRequest) returns (SubmitTaskResponse);
+
+  // GetTask returns the latest scheduler view of a task.
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+
+  // GetClusterOverview returns a point-in-time scheduler status snapshot.
+  rpc GetClusterOverview(GetClusterOverviewRequest) returns (GetClusterOverviewResponse);
+}
+
+message RegisterWorkerRequest {
+  WorkerDescriptor worker = 1;
+}
+
+message RegisterWorkerResponse {
+  WorkerStatus worker = 1;
+  string message = 2;
+}
+
+message HeartbeatRequest {
+  string worker_id = 1;
+  uint32 running_tasks = 2;
+  NodeState reported_state = 3;
+  repeated string active_task_ids = 4;
+}
+
+message HeartbeatResponse {
+  WorkerStatus worker = 1;
+  string message = 2;
+}
+
+message WatchAssignmentsRequest {
+  string worker_id = 1;
+  bool resume_unacked = 2;
+}
+
+message TaskAssignment {
+  string task_id = 1;
+  TaskSpec spec = 2;
+  google.protobuf.Timestamp assigned_at = 3;
+}
+
+message ReportTaskResultRequest {
+  TaskResult result = 1;
+}
+
+message ReportTaskResultResponse {
+  TaskInfo task = 1;
+  string message = 2;
+}
+
+message SubmitTaskRequest {
+  TaskSpec spec = 1;
+}
+
+message SubmitTaskResponse {
+  TaskInfo task = 1;
+}
+
+message GetTaskRequest {
+  string task_id = 1;
+}
+
+message GetTaskResponse {
+  TaskInfo task = 1;
+}
+
+message GetClusterOverviewRequest {}
+
+message GetClusterOverviewResponse {
+  ClusterOverview overview = 1;
+}

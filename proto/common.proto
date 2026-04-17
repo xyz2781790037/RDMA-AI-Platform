@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package rdma.scheduler.v1;
+
+option cc_enable_arenas = true;
+option go_package = "rdma-ai-platform/scheduler/proto/gen/schedulerv1;schedulerv1";
+
+import "google/protobuf/timestamp.proto";
+
+// NodeState describes the scheduler-visible health and load state of a worker.
+enum NodeState {
+  NODE_STATE_UNSPECIFIED = 0;
+  NODE_STATE_READY = 1;
+  NODE_STATE_BUSY = 2;
+  NODE_STATE_OFFLINE = 3;
+}
+
+// TaskState tracks a task throughout the scheduler lifecycle.
+enum TaskState {
+  TASK_STATE_UNSPECIFIED = 0;
+  TASK_STATE_PENDING = 1;
+  TASK_STATE_RUNNING = 2;
+  TASK_STATE_COMPLETED = 3;
+  TASK_STATE_FAILED = 4;
+}
+
+// WorkerDescriptor captures the static properties a worker exposes at register time.
+message WorkerDescriptor {
+  string id = 1;
+  string address = 2;
+  uint32 capacity = 3;
+  repeated string labels = 4;
+  map<string, string> attributes = 5;
+}
+
+// WorkerStatus captures the latest runtime view of a registered worker.
+message WorkerStatus {
+  WorkerDescriptor worker = 1;
+  uint32 running_tasks = 2;
+  NodeState state = 3;
+  google.protobuf.Timestamp last_heartbeat = 4;
+}
+
+// TaskInput supports both the current prompt-based fake model and future payload references.
+message TaskInput {
+  oneof source {
+    string prompt = 1;
+    string payload_ref = 2;
+    bytes inline_bytes = 3;
+  }
+}
+
+// TaskSpec contains the execution intent that the scheduler sends to workers.
+message TaskSpec {
+  string model = 1;
+  string operation = 2;
+  TaskInput input = 3;
+  map<string, string> metadata = 4;
+}
+
+// TaskInfo is the scheduler-facing task record.
+message TaskInfo {
+  string id = 1;
+  TaskSpec spec = 2;
+  TaskState state = 3;
+  string assigned_worker = 4;
+  string message = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp started_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+}
+
+// TaskResult is reported by a worker after execution finishes.
+message TaskResult {
+  string task_id = 1;
+  bool success = 2;
+  string output = 3;
+  string error_message = 4;
+  map<string, string> metadata = 5;
+  google.protobuf.Timestamp completed_at = 6;
+}
+
+// ClusterOverview returns a point-in-time scheduler snapshot.
+message ClusterOverview {
+  google.protobuf.Timestamp generated_at = 1;
+  repeated WorkerStatus workers = 2;
+  repeated TaskInfo tasks = 3;
+  uint32 total_workers = 4;
+  uint32 active_workers = 5;
+  uint32 pending_tasks = 6;
+  uint32 running_tasks = 7;
+  uint32 completed_tasks = 8;
+}
