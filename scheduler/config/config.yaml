@@ -1,0 +1,10 @@
+server:
+  addr: ":8080"
+  read_header_timeout: "5s"
+
+grpc:
+  addr: ":9090"
+
+scheduler:
+  offline_after: "30s"
+  monitor_interval: "5s"
