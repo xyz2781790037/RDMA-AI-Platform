@@ -1,0 +1,5 @@
+worker_id: worker-1
+listen_port: 9001
+scheduler_addr: 127.0.0.1:8080
+heartbeat_interval: 5
+threads: 4
